@@ -135,8 +135,10 @@ function readConfig(): AppConfig {
   if (!fs.existsSync(fp)) return defaultConfig();
   try {
     const parsed = JSON.parse(fs.readFileSync(fp, 'utf-8')) as Partial<AppConfig>;
-    // Merge with defaults so missing fields never crash the renderer
-    return { ...defaultConfig(), ...parsed };
+    const merged = { ...defaultConfig(), ...parsed };
+    // Sanitize: reject any theme value that no longer exists
+    if (merged.theme !== 'normal' && merged.theme !== 'aero') merged.theme = 'normal';
+    return merged;
   } catch { return defaultConfig(); }
 }
 
