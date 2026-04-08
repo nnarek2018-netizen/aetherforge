@@ -28,7 +28,7 @@ interface UpdateInfo {
 }
 
 interface AppConfig {
-  theme:      'normal' | 'aero';
+  theme:      'normal' | 'aero' | 'dune';
   accent:     string;
   background: string;
   textColor:  string;
@@ -136,8 +136,8 @@ function readConfig(): AppConfig {
   try {
     const parsed = JSON.parse(fs.readFileSync(fp, 'utf-8')) as Partial<AppConfig>;
     const merged = { ...defaultConfig(), ...parsed };
-    // Sanitize: reject any theme value that no longer exists
-    if (merged.theme !== 'normal' && merged.theme !== 'aero') merged.theme = 'normal';
+    // Sanitize: reject any unknown theme value
+    if (!['normal', 'aero', 'dune'].includes(merged.theme)) merged.theme = 'normal';
     return merged;
   } catch { return defaultConfig(); }
 }

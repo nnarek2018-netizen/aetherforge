@@ -28,7 +28,7 @@ interface UpdateInfo { updated: boolean; from: string; to: string; }
 
 /** Persisted user preferences saved to config.json via the main process. */
 interface AppConfig {
-  theme:      'normal' | 'aero';   // 'normal' = customizable, 'aero' = Frutiger Aero fixed
+  theme:      'normal' | 'aero' | 'dune';  // 'normal' = customizable, 'aero' / 'dune' = fixed
   accent:     string;              // CSS hex color — drives the UI chrome
   background: string;              // CSS hex color — main background
   textColor:  string;              // CSS hex color — AI message text
@@ -174,8 +174,9 @@ function lightenHex(hex: string, amount: number): string {
  * The whole UI palette is derived from the single accent + background picks.
  */
 function applyNormalTheme(cfg: AppConfig): void {
-  document.body.classList.remove('theme-aero');
+  document.body.classList.remove('theme-aero', 'theme-dune');
   document.getElementById('aero-scene')?.remove();
+  document.getElementById('dune-scene')?.remove();
 
   const root   = document.documentElement;
   const accent = cfg.accent;
@@ -206,8 +207,10 @@ function applyNormalTheme(cfg: AppConfig): void {
  * All colors are fixed in CSS; JS only manages the scene DOM and class toggling.
  */
 function applyAeroTheme(): void {
+  document.body.classList.remove('theme-dune');
   document.body.classList.add('theme-aero');
-  document.body.style.fontFamily = '';  // let CSS handle it
+  document.body.style.fontFamily = '';
+  document.getElementById('dune-scene')?.remove();
 
   // Strip any custom properties set by normal theme so they don't bleed through
   const varsToReset = ['--bg','--fg','--fg-hi','--fg-dim','--fg-muted',
@@ -273,10 +276,91 @@ function injectAeroScene(): void {
   document.body.insertBefore(scene, document.body.firstChild);
 }
 
+/** Apply Dune theme — cinematic desert aesthetic with warm glass panels. */
+function applyDuneTheme(): void {
+  document.body.classList.remove('theme-aero');
+  document.body.classList.add('theme-dune');
+  document.body.style.fontFamily = '';
+  document.getElementById('aero-scene')?.remove();
+
+  const varsToReset = ['--bg','--fg','--fg-hi','--fg-dim','--fg-muted',
+                       '--input-bg','--btn-bg','--btn-hover','--code-bg',
+                       '--code-line','--ai-text','--user-text'];
+  for (const v of varsToReset) document.documentElement.style.removeProperty(v);
+
+  injectDuneScene();
+}
+
+/** Inject layered SVG dune silhouettes + floating spice-dust particles. */
+function injectDuneScene(): void {
+  document.getElementById('dune-scene')?.remove();
+
+  const scene = document.createElement('div');
+  scene.id = 'dune-scene';
+
+  // ── SVG dune silhouettes ──────────────────────────────────────────────────
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg   = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 1200 340');
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:58%;pointer-events:none;';
+
+  const duneShapes: Array<[string, string]> = [
+    // Far dune ridge
+    ['M0,340 L0,195 Q80,165 200,182 Q340,200 480,148 Q580,110 700,132 Q820,155 960,118 Q1080,88 1200,105 L1200,340 Z',
+     'rgba(185,130,55,0.55)'],
+    // Far crest highlight
+    ['M0,195 Q80,165 200,182 Q340,200 480,148 Q580,110 700,132 Q820,155 960,118 Q1080,88 1200,105 L1200,115 Q1080,98 960,130 Q820,167 700,142 Q580,120 480,158 Q340,210 200,192 Q80,175 0,205 Z',
+     'rgba(255,210,130,0.28)'],
+    // Mid dune
+    ['M0,340 L0,240 Q120,210 280,228 Q430,246 580,195 Q700,155 840,178 Q960,200 1100,162 Q1160,148 1200,155 L1200,340 Z',
+     'rgba(160,100,35,0.70)'],
+    // Mid crest highlight
+    ['M0,240 Q120,210 280,228 Q430,246 580,195 Q700,155 840,178 Q960,200 1100,162 Q1160,148 1200,155 L1200,165 Q1160,158 1100,172 Q960,212 840,188 Q700,165 580,205 Q430,256 280,238 Q120,220 0,250 Z',
+     'rgba(255,200,100,0.22)'],
+    // Foreground dune
+    ['M0,340 L0,282 Q90,262 220,272 Q360,283 500,252 Q640,220 760,238 Q880,256 1000,228 Q1100,208 1200,215 L1200,340 Z',
+     'rgba(130,78,18,0.88)'],
+    // Front crest highlight
+    ['M0,282 Q90,262 220,272 Q360,283 500,252 Q640,220 760,238 Q880,256 1000,228 Q1100,208 1200,215 L1200,226 Q1100,218 1000,238 Q880,266 760,248 Q640,230 500,262 Q360,293 220,282 Q90,272 0,292 Z',
+     'rgba(255,185,80,0.30)'],
+  ];
+
+  for (const [d, fill] of duneShapes) {
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', fill);
+    svg.appendChild(path);
+  }
+  scene.appendChild(svg);
+
+  // ── Floating spice/dust motes ─────────────────────────────────────────────
+  const positions = [
+    [12,18],[28,42],[45,12],[62,35],[78,22],[18,55],
+    [36,28],[55,48],[71,15],[85,38],[93,25],[8,62],
+  ];
+  for (const [lp, tp] of positions) {
+    const p = document.createElement('div');
+    p.className               = 'dune-particle';
+    p.style.left              = lp + '%';
+    p.style.top               = tp + '%';
+    const sz                  = 1.5 + Math.random() * 3;
+    p.style.width             = sz + 'px';
+    p.style.height            = sz + 'px';
+    p.style.animationDelay    = (Math.random() * 7).toFixed(2) + 's';
+    p.style.animationDuration = (5 + Math.random() * 8).toFixed(2) + 's';
+    scene.appendChild(p);
+  }
+
+  document.body.insertBefore(scene, document.body.firstChild);
+}
+
 /** Apply saved config: pick the correct theme and push all settings. */
 function applyConfig(cfg: AppConfig): void {
   if (cfg.theme === 'aero') {
     applyAeroTheme();
+  } else if (cfg.theme === 'dune') {
+    applyDuneTheme();
   } else {
     applyNormalTheme(cfg);
   }
@@ -335,6 +419,7 @@ const pickText          = document.getElementById('pick-text')          as HTMLI
 const pickFont          = document.getElementById('pick-font')          as HTMLSelectElement;
 const appearanceSection = document.getElementById('appearance-section') as HTMLElement;
 const aeroNoteSection   = document.getElementById('aero-note-section')  as HTMLElement;
+const duneNoteSection   = document.getElementById('dune-note-section')  as HTMLElement;
 const settingsModelList = document.getElementById('settings-model-list') as HTMLDivElement;
 const newModelNameEl    = document.getElementById('new-model-name')     as HTMLInputElement;
 const newModelTagEl     = document.getElementById('new-model-tag')      as HTMLInputElement;
@@ -358,6 +443,8 @@ function closeSettings(): void {
 /** Sync the settings panel UI widgets to match the given config. */
 function updateSettingsUI(cfg: AppConfig): void {
   const isAero = cfg.theme === 'aero';
+  const isDune = cfg.theme === 'dune';
+  const isLocked = isAero || isDune;
 
   // Theme button active state
   document.querySelectorAll<HTMLButtonElement>('.theme-btn').forEach(btn => {
@@ -365,8 +452,9 @@ function updateSettingsUI(cfg: AppConfig): void {
   });
 
   // Show/hide appearance vs locked-theme note
-  appearanceSection.classList.toggle('hidden', isAero);
+  appearanceSection.classList.toggle('hidden', isLocked);
   aeroNoteSection.classList.toggle('hidden',  !isAero);
+  duneNoteSection.classList.toggle('hidden',  !isDune);
 
   // Sync color picker values
   pickAccent.value = cfg.accent;
@@ -378,11 +466,11 @@ function updateSettingsUI(cfg: AppConfig): void {
     if (pickFont.options[i].value === cfg.font) { pickFont.selectedIndex = i; break; }
   }
 
-  // Disable all customisation controls in Aero mode
-  pickAccent.disabled = isAero;
-  pickBg.disabled     = isAero;
-  pickText.disabled   = isAero;
-  pickFont.disabled   = isAero;
+  // Disable all customisation controls in locked modes
+  pickAccent.disabled = isLocked;
+  pickBg.disabled     = isLocked;
+  pickText.disabled   = isLocked;
+  pickFont.disabled   = isLocked;
 }
 
 /** Render the model list inside the settings drawer. */
@@ -841,8 +929,9 @@ async function handleSend(): Promise<void> {
   btnSend.disabled    = true;
   btnSend.textContent = '  …  ';
 
-  // In Aero mode, intensify the backdrop blur while the AI is responding
+  // In Aero/Dune mode, intensify the backdrop blur while the AI is responding
   if (currentConfig.theme === 'aero') chatArea.classList.add('aero-responding');
+  if (currentConfig.theme === 'dune') chatArea.classList.add('dune-responding');
 
   const thinkingBlock = showThinking();
 
@@ -882,7 +971,7 @@ async function handleSend(): Promise<void> {
         if (parsed.error) {
           thinkingBlock.remove();
           addSystem(`Error from backend: ${parsed.error}`, true);
-          chatArea.classList.remove('aero-responding');
+          chatArea.classList.remove('aero-responding', 'dune-responding');
           resetUI();
           return;
         }
@@ -907,7 +996,7 @@ async function handleSend(): Promise<void> {
   }
 
   // Remove responding blur class once streaming is done
-  chatArea.classList.remove('aero-responding');
+  chatArea.classList.remove('aero-responding', 'dune-responding');
 
   // Post-process: render code blocks once streaming completes
   if (aiBody && rawText && !rawText.startsWith('[ERROR]')) {
@@ -1170,7 +1259,7 @@ async function init(): Promise<void> {
   // Theme toggle buttons
   document.querySelectorAll<HTMLButtonElement>('.theme-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const theme = btn.dataset['theme'] as 'normal' | 'aero';
+      const theme = btn.dataset['theme'] as 'normal' | 'aero' | 'dune';
       currentConfig.theme = theme;
       applyConfig(currentConfig);
       await saveConfig();

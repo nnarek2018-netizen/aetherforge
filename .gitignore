@@ -34,7 +34,8 @@ chats/
 Thumbs.db
 .DS_Store
 
-# ── Claude internal memory (not project source) ─────────────────────────────────
+# ── Claude Code internals (not project source) ──────────────────────────────────
+.claude/
 memory/
 
 # ── ComfyUI: large model weights and generated outputs ──────────────────────────

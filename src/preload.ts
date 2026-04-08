@@ -9,7 +9,7 @@ interface ChatMeta { id: string; title: string; createdAt: number; updatedAt: nu
 interface StoredChat extends ChatMeta { messages: HistoryEntry[]; }
 interface UpdateInfo  { updated: boolean; from: string; to: string; }
 interface AppConfig {
-  theme:      'normal' | 'aero';
+  theme:      'normal' | 'aero' | 'dune';
   accent:     string;
   background: string;
   textColor:  string;
