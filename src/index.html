@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src http://127.0.0.1:*; img-src 'self' blob: data: http://127.0.0.1:*;" />
+  <title>Aetherforge</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       CUSTOM TITLEBAR  (frameless drag region + controls)
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <header id="titlebar">
+
+    <div id="titlebar-drag">
+      <span id="app-icon">⬡</span>
+      <span id="app-title">AETHERFORGE</span>
+    </div>
+
+    <div id="model-area">
+      <span id="model-label">MODEL ▸</span>
+      <select id="model-select">
+        <option value="">Loading…</option>
+      </select>
+      <!-- Toggle to Image Forge (ComfyUI + PixArt-Sigma local image generation) -->
+      <button id="btn-img-forge" title="Image Forge — generate images via ComfyUI + PixArt-Sigma">IMAGE FORGE</button>
+      <!-- Open settings panel -->
+      <button id="btn-settings" title="Settings">⚙</button>
+    </div>
+
+    <div id="win-controls">
+      <button id="btn-min"   title="Minimize">&#x2013;</button>
+      <button id="btn-max"   title="Maximize / Restore">&#x25A1;</button>
+      <button id="btn-close" title="Close">&#x2715;</button>
+    </div>
+
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       APP BODY  —  sidebar  |  content
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div id="app-body">
+
+    <!-- ── Left sidebar: saved chat history ─────────────────────────────── -->
+    <aside id="sidebar">
+
+      <div id="sidebar-hdr">
+        <span id="sidebar-label">CHATS</span>
+        <button id="btn-new-chat" title="New chat">&#x2B;</button>
+      </div>
+
+      <!-- Chat list items are injected here by renderer.js -->
+      <div id="chat-list"></div>
+
+    </aside>
+
+    <!-- Vertical rule between sidebar and content -->
+    <div class="v-divider"></div>
+
+    <!-- ── Main content area ────────────────────────────────────────────── -->
+    <main id="content">
+
+      <!-- Chat scroll area -->
+      <div id="chat-area">
+
+        <!-- Welcome overlay (fades out on first message) -->
+        <div id="welcome">
+          <div id="welcome-title">Welcome to Aetherforge</div>
+          <div id="welcome-sub">the leading uncensored AI app</div>
+          <div id="welcome-rule">─────────────────────────────</div>
+          <div id="welcome-hint">Choose a model above and start typing.</div>
+        </div>
+
+        <!-- Messages injected here -->
+        <div id="messages"></div>
+
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Input bar -->
+      <div id="input-bar">
+        <textarea
+          id="input"
+          placeholder="Type a message…   (Enter → send  ·  Shift+Enter → newline)"
+          rows="3"
+          spellcheck="false"
+          autocomplete="off"
+        ></textarea>
+
+        <div id="btn-col">
+          <button id="btn-save" disabled>SAVE CODE</button>
+          <button id="btn-send">SEND ▶</button>
+        </div>
+      </div>
+
+    </main>
+
+  </div><!-- /#app-body -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SETTINGS PANEL  (slide-in drawer from the right)
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div id="settings-panel" aria-hidden="true">
+
+    <!-- Click overlay to close -->
+    <div id="settings-overlay"></div>
+
+    <!-- Drawer content -->
+    <div id="settings-drawer">
+
+      <div id="settings-hdr">
+        <span id="settings-title">SETTINGS</span>
+        <button id="btn-settings-close" title="Close">✕</button>
+      </div>
+
+      <!-- ── Theme selection ─────────────────────────────────────────────── -->
+      <section class="settings-section">
+        <div class="settings-section-label">THEME</div>
+        <div id="theme-options">
+          <button class="theme-btn" data-theme="normal">Normal</button>
+          <button class="theme-btn" data-theme="aero">Frutiger Aero</button>
+          <button class="theme-btn" data-theme="dune">Dune</button>
+        </div>
+      </section>
+
+      <!-- ── Normal theme appearance (hidden in Aero mode) ──────────────── -->
+      <section class="settings-section" id="appearance-section">
+        <div class="settings-section-label">APPEARANCE</div>
+
+        <div class="setting-row">
+          <label class="setting-label">Accent Color</label>
+          <input type="color" id="pick-accent" value="#CC0000" />
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">Background</label>
+          <input type="color" id="pick-bg" value="#000000" />
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">Text Color</label>
+          <input type="color" id="pick-text" value="#CC0000" />
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">Font</label>
+          <select id="pick-font">
+            <option value="Arial">Arial</option>
+            <option value="Segoe UI">Segoe UI</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Calibri">Calibri</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Inter">Inter</option>
+            <option value="Roboto">Roboto</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- ── Shown only when Frutiger Aero is active ────────────────────── -->
+      <section class="settings-section hidden" id="aero-note-section">
+        <div class="aero-theme-note">
+          ✦ Frutiger Aero theme uses fixed classic colors.<br>
+          Color pickers are disabled in this mode.
+        </div>
+      </section>
+
+      <!-- ── Shown only when Dune is active ────────────────────────────── -->
+      <section class="settings-section hidden" id="dune-note-section">
+        <div class="dune-theme-note">
+          ✦ Dune theme uses fixed desert colors.<br>
+          Color pickers are disabled in this mode.
+        </div>
+      </section>
+
+      <!-- ── Model management ───────────────────────────────────────────── -->
+      <section class="settings-section">
+        <div class="settings-section-label">MODELS</div>
+        <div id="settings-model-list"></div>
+        <div id="add-model-form">
+          <input id="new-model-name" placeholder="Display name" autocomplete="off" spellcheck="false" />
+          <input id="new-model-tag"  placeholder="Ollama tag  (e.g. llama3:latest)" autocomplete="off" spellcheck="false" />
+          <button id="btn-add-model">ADD MODEL</button>
+        </div>
+      </section>
+
+    </div><!-- /#settings-drawer -->
+  </div><!-- /#settings-panel -->
+
+  <script src="../dist/renderer.js"></script>
+
+</body>
+</html>

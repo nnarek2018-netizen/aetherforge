@@ -1,0 +1,53 @@
+# ── Node / Electron ────────────────────────────────────────────────────────────
+node_modules/
+dist/
+release/
+
+# ── Python ─────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ── Compiled / generated output ────────────────────────────────────────────────
+*.js.map
+*.d.ts
+
+# ── User data (created at runtime in AppData, never in repo) ───────────────────
+userData/
+config.json
+chats/
+
+# ── Build artefacts ─────────────────────────────────────────────────────────────
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.snap
+
+# ── IDE / OS junk ───────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user
+Thumbs.db
+.DS_Store
+
+# ── Claude internal memory (not project source) ─────────────────────────────────
+memory/
+
+# ── ComfyUI: large model weights and generated outputs ──────────────────────────
+# Keep the folder tracked as a submodule reference, but ignore heavy content
+ComfyUI/models/
+ComfyUI/output/
+ComfyUI/input/
+ComfyUI/temp/
+ComfyUI/__pycache__/
+ComfyUI/**/__pycache__/
+ComfyUI/**/*.pyc
+
+# ── Scratch / temp files ────────────────────────────────────────────────────────
+a.txt
+*.tmp
+*.log
